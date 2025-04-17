@@ -29,7 +29,7 @@ const UrlInput: React.FC<UrlInputProps> = ({ onUrlsChange, onImageInputsChange }
     // Validate URL format
     const hasInvalidUrl = newUrls.some(url => url && !validateUrl(url));
     if (hasInvalidUrl) {
-      setError('Please enter a valid URL');
+      setError('Por favor, insira uma URL válida');
     } else {
       setError(null);
     }
@@ -69,7 +69,7 @@ const UrlInput: React.FC<UrlInputProps> = ({ onUrlsChange, onImageInputsChange }
 
   return (
     <div className="space-y-4">
-      <div className="text-sm font-medium mb-2">Enter image URLs</div>
+      <div className="text-sm font-medium mb-2">Insira as URLs das imagens</div>
       
       {urls.map((url, index) => (
         <div key={index} className="flex items-center gap-2">
@@ -77,7 +77,7 @@ const UrlInput: React.FC<UrlInputProps> = ({ onUrlsChange, onImageInputsChange }
             type="url"
             value={url}
             onChange={(e) => handleUrlChange(index, e.target.value)}
-            placeholder="https://example.com/menu-image.jpg"
+            placeholder="https://exemplo.com/imagem-cardapio.jpg"
             className="flex-1"
           />
           {urls.length > 1 && (
@@ -102,11 +102,11 @@ const UrlInput: React.FC<UrlInputProps> = ({ onUrlsChange, onImageInputsChange }
         className="mt-2"
       >
         <Plus className="h-4 w-4 mr-2" />
-        Add another URL
+        Adicionar outra URL
       </Button>
       
       <div className="text-xs text-gray-500 mt-2">
-        Enter URLs of publicly accessible menu images (JPEG, PNG, WebP, GIF)
+        Insira URLs de imagens de cardápios publicamente acessíveis (JPEG, PNG, WebP, GIF)
       </div>
     </div>
   );

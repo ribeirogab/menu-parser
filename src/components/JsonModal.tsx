@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -18,14 +17,14 @@ const JsonModal: React.FC<JsonModalProps> = ({ jsonContent, isOpen, onClose }) =
     navigator.clipboard.writeText(jsonContent)
       .then(() => {
         setHasCopied(true);
-        toast.success("JSON copied to clipboard!");
+        toast.success("JSON copiado para a área de transferência!");
         
         setTimeout(() => {
           setHasCopied(false);
         }, 2000);
       })
       .catch(() => {
-        toast.error("Failed to copy JSON");
+        toast.error("Falha ao copiar o JSON");
       });
   };
 
@@ -33,7 +32,7 @@ const JsonModal: React.FC<JsonModalProps> = ({ jsonContent, isOpen, onClose }) =
     <Dialog open={isOpen} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-3xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle className="text-xl">Generated Menu JSON</DialogTitle>
+          <DialogTitle className="text-xl">JSON do Cardápio Gerado</DialogTitle>
         </DialogHeader>
         <div className="overflow-auto max-h-[50vh] mt-4 rounded-md">
           <pre className="bg-gray-100 p-4 text-sm overflow-x-auto rounded-md whitespace-pre-wrap">
@@ -49,12 +48,12 @@ const JsonModal: React.FC<JsonModalProps> = ({ jsonContent, isOpen, onClose }) =
             {hasCopied ? (
               <>
                 <Check className="w-4 h-4 mr-2" />
-                <span>Copied!</span>
+                <span>Copiado!</span>
               </>
             ) : (
               <>
                 <Copy className="w-4 h-4 mr-2" />
-                <span>Copy JSON</span>
+                <span>Copiar JSON</span>
               </>
             )}
           </Button>

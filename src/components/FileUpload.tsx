@@ -25,7 +25,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           const base64String = reader.result;
           resolve(base64String);
         } else {
-          reject(new Error('Failed to convert file to base64'));
+          reject(new Error('Falha ao converter arquivo para base64'));
         }
       };
       reader.onerror = error => reject(error);
@@ -51,7 +51,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         );
         onImageInputsChange(imageInputs);
       } catch (error) {
-        console.error('Error converting files to base64:', error);
+        console.error('Erro ao converter arquivos para base64:', error);
       }
     }
   };
@@ -98,8 +98,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
       >
         <div className="flex flex-col items-center justify-center space-y-2">
           <Upload className="h-8 w-8 text-gray-400" />
-          <h3 className="text-lg font-medium">Drag and drop your menu images</h3>
-          <p className="text-sm text-gray-500">or click to browse files</p>
+          <h3 className="text-lg font-medium">Arraste e solte suas imagens de cardápio</h3>
+          <p className="text-sm text-gray-500">ou clique para selecionar arquivos</p>
           
           <input
             type="file"
@@ -112,7 +112,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           
           <label htmlFor="file-upload">
             <Button variant="outline" size="sm" className="mt-2" asChild>
-              <span>Select Files</span>
+              <span>Selecionar Arquivos</span>
             </Button>
           </label>
         </div>
@@ -120,7 +120,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       {files.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium">Selected Files</h4>
+          <h4 className="text-sm font-medium">Arquivos Selecionados</h4>
           <div className="space-y-2">
             {files.map((file, index) => (
               <div
@@ -132,7 +132,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     {file.type.startsWith('image/') ? (
                       <img
                         src={URL.createObjectURL(file)}
-                        alt="Preview"
+                        alt="Prévia"
                         className="w-8 h-8 object-cover rounded-md"
                       />
                     ) : (

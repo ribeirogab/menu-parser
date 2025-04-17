@@ -1,6 +1,6 @@
 import { openai } from '../lib/openai';
 
-// Define the structure for a menu item
+// Define a estrutura para um item do cardápio
 export interface MenuItem {
   dish_name: string;
   description: string;
@@ -8,22 +8,22 @@ export interface MenuItem {
   category: string;
 }
 
-// Define the structure for the complete menu analysis result
+// Define a estrutura para o resultado completo da análise do cardápio
 export interface MenuAnalysisResult {
   items: MenuItem[];
   error?: string;
 }
 
-// Define the structure for image input
+// Define a estrutura para entrada de imagem
 export interface ImageInput {
   type: 'url' | 'base64';
   data: string;
 }
 
 /**
- * Analyzes menu images and extracts structured data
- * @param images Array of image inputs (URLs or base64 encoded images) of restaurant menus
- * @returns Structured menu data with categorized items
+ * Analisa imagens de cardápios e extrai dados estruturados
+ * @param images Array de entradas de imagens (URLs ou imagens codificadas em base64) de cardápios de restaurantes
+ * @returns Dados estruturados do cardápio com itens categorizados
  */
 export async function menuAnalyzer(
   images: ImageInput[]
@@ -45,33 +45,33 @@ export async function menuAnalyzer(
     });
 
     const systemPrompt = `
-      You are an assistant specialized in analyzing restaurant menus.
-      Analyze the provided menu images and extract the following information:
+      Você é um assistente especializado em analisar cardápios de restaurantes.
+      Analise as imagens de cardápio fornecidas e extraia as seguintes informações:
       
-      1. Name of each dish
-      2. Description (if available)
-      3. Price
-      4. Category (e.g., starters, main courses, drinks, desserts)
+      1. Nome de cada prato
+      2. Descrição (se disponível)
+      3. Preço
+      4. Categoria (ex: entradas, pratos principais, bebidas, sobremesas)
       
-      Format the output as a JSON array with the following structure for each item:
+      Formate a saída como um array JSON com a seguinte estrutura para cada item:
       {{
-        "dish_name": "Name of the dish",
-        "description": "Description of the dish",
+        "dish_name": "Nome do prato",
+        "description": "Descrição do prato",
         "price": "R$ XX,XX",
-        "category": "Category of the dish"
+        "category": "Categoria do prato"
       }}
       
-      Important notes:
-      - Keep all texts in Portuguese BR
-      - If there is no description, use an empty string
-      - Maintain the original price format (e.g., R$ 10,90)
-      - Correctly categorize items based on the menu context
-      - Include ALL items visible in the images
-      - Do not invent information that is not present in the images
-      - Return ONLY the JSON array, no additional text or explanations
+      Notas importantes:
+      - Mantenha todos os textos em Português BR
+      - Se não houver descrição, use uma string vazia
+      - Mantenha o formato original do preço (ex: R$ 10,90)
+      - Categorize corretamente os itens com base no contexto do cardápio
+      - Inclua TODOS os itens visíveis nas imagens
+      - Não invente informações que não estejam presentes nas imagens
+      - Retorne APENAS o array JSON, sem texto adicional ou explicações
     `;
 
-    // Make the API request to OpenAI
+    // Faz a requisição para a API da OpenAI
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -84,40 +84,40 @@ export async function menuAnalyzer(
           content: [
             {
               type: 'text',
-              text: 'Analyze this menu and extract structured data as requested:',
+              text: 'Analise este cardápio e extraia os dados estruturados conforme solicitado:',
             },
             ...formattedImages,
           ],
         },
       ],
       max_tokens: 4096,
-      temperature: 0.2, // Lower temperature for more deterministic results
+      temperature: 0.2, // Temperatura mais baixa para resultados mais determinísticos
     });
 
-    // Extract and parse the response
+    // Extrai e analisa a resposta
     const content = response.choices[0]?.message?.content || '';
     
     try {
-      // Clean the content by removing any markdown code blocks and extra text
+      // Limpa o conteúdo removendo blocos de código markdown e texto extra
       const jsonStr = content.replace(/```json\n|```\n|```/g, '').trim();
       
-      // Parse the JSON string into an array of menu items
+      // Analisa a string JSON em um array de itens de cardápio
       const items = JSON.parse(jsonStr) as MenuItem[];
       
       return { items };
     } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError);
+      console.error('Erro ao analisar resposta da OpenAI:', parseError);
       return {
         items: [],
         error:
-          'Failed to process the model response. The returned format is not valid JSON.',
+          'Falha ao processar a resposta do modelo. O formato retornado não é um JSON válido.',
       };
     }
   } catch (error) {
-    console.error('Error calling OpenAI API:', error);
+    console.error('Erro ao chamar a API da OpenAI:', error);
     return {
       items: [],
-      error: `Failed to analyze the menu: ${error.message}`,
+      error: `Falha ao analisar o cardápio: ${error.message}`,
     };
   }
 }
