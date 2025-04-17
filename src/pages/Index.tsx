@@ -1,25 +1,49 @@
-
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import FileUpload from "@/components/FileUpload";
-import JsonModal from "@/components/JsonModal";
-import { generateSampleMenuJson } from "@/utils/sampleJson";
-import { ImageDown } from "lucide-react";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import FileUpload from '@/components/FileUpload';
+import JsonModal from '@/components/JsonModal';
+import { ImageDown, Loader2 } from 'lucide-react';
+import { menuAnalyzer, MenuAnalysisResult } from '@/services/menu-analyzer';
+import { toast } from 'sonner';
 
 const Index = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [jsonContent, setJsonContent] = useState("");
+  const [jsonContent, setJsonContent] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Default image URL for testing
+  const defaultImageUrl =
+    'https://pub-d5a0dc827d5e4a52bffaede19ac19edb.r2.dev/12d9097a-0e09-406d-8834-ec292d6f1cbf.jpg';
 
   const handleFilesChange = (newFiles: File[]) => {
     setFiles(newFiles);
   };
 
-  const handleGenerateJson = () => {
-    // Generate sample JSON (in a real app, this would process the images)
-    const sampleJson = generateSampleMenuJson();
-    setJsonContent(sampleJson);
-    setIsModalOpen(true);
+  const handleGenerateJson = async () => {
+    setIsLoading(true);
+    try {
+      // For now, we'll use the default image URL as specified in the requirements
+      // In a real implementation, we would process the uploaded files
+      const imageUrls = [defaultImageUrl];
+
+      const result: MenuAnalysisResult = await menuAnalyzer(imageUrls);
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      // Format the JSON for display
+      const formattedJson = JSON.stringify(result.items, null, 2);
+      setJsonContent(formattedJson);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error generating menu JSON:', error);
+      toast.error('Failed to generate menu JSON');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const closeModal = () => {
@@ -42,14 +66,23 @@ const Index = () => {
           <FileUpload onFilesChange={handleFilesChange} />
 
           <div className="mt-8 flex justify-center">
-            <Button 
+            <Button
               size="lg"
               onClick={handleGenerateJson}
-              disabled={files.length === 0}
+              disabled={isLoading}
               className="gap-2"
             >
-              <ImageDown className="w-5 h-5" />
-              Generate Menu JSON
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Analyzing Menu...
+                </>
+              ) : (
+                <>
+                  <ImageDown className="w-5 h-5" />
+                  Generate Menu JSON
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -58,11 +91,18 @@ const Index = () => {
           {files.length > 0 ? (
             <p>{files.length} file(s) ready for processing</p>
           ) : (
-            <p>Upload one or more menu images to get started</p>
+            <div>
+              <p className="mb-2">
+                Upload one or more menu images to get started
+              </p>
+              <p className="text-xs text-blue-600">
+                Note: Currently using a default menu image for demonstration
+              </p>
+            </div>
           )}
         </div>
 
-        <JsonModal 
+        <JsonModal
           jsonContent={jsonContent}
           isOpen={isModalOpen}
           onClose={closeModal}
