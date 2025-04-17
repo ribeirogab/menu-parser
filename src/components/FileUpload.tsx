@@ -1,16 +1,60 @@
-
-import React, { useState, useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { X, Upload } from "lucide-react";
+import React, { useCallback, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Upload, X } from 'lucide-react';
+import { ImageInput } from '@/services/menu-analyzer';
 
 type FileUploadProps = {
   onFilesChange: (files: File[]) => void;
+  onImageInputsChange?: (imageInputs: ImageInput[]) => void;
 };
 
-const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
+const FileUpload: React.FC<FileUploadProps> = ({ 
+  onFilesChange, 
+  onImageInputsChange 
+}) => {
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+
+  const convertToBase64 = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          // Remove the prefix (e.g., 'data:image/jpeg;base64,') to get just the base64 string
+          const base64String = reader.result;
+          resolve(base64String);
+        } else {
+          reject(new Error('Failed to convert file to base64'));
+        }
+      };
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const processFiles = async (fileList: File[]) => {
+    // Update the files state for display purposes
+    setFiles(fileList);
+    onFilesChange(fileList);
+    
+    // If the parent component wants image inputs, convert files to base64
+    if (onImageInputsChange) {
+      try {
+        const imageInputs: ImageInput[] = await Promise.all(
+          fileList.map(async (file) => {
+            const base64 = await convertToBase64(file);
+            return {
+              type: 'base64',
+              data: base64
+            };
+          })
+        );
+        onImageInputsChange(imageInputs);
+      } catch (error) {
+        console.error('Error converting files to base64:', error);
+      }
+    }
+  };
 
   const handleFileChange = useCallback((newFiles: FileList | null) => {
     if (!newFiles) return;
@@ -20,105 +64,94 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
       file.type.startsWith('image/') || file.type === 'application/pdf'
     );
     
-    setFiles(prevFiles => {
-      const updatedFiles = [...prevFiles, ...imageFiles];
-      onFilesChange(updatedFiles);
-      return updatedFiles;
-    });
-  }, [onFilesChange]);
+    processFiles([...files, ...imageFiles]);
+  }, [files]);
 
-  const removeFile = useCallback((index: number) => {
-    setFiles(prevFiles => {
-      const updatedFiles = prevFiles.filter((_, i) => i !== index);
-      onFilesChange(updatedFiles);
-      return updatedFiles;
-    });
-  }, [onFilesChange]);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(true);
   }, []);
 
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
     handleFileChange(e.dataTransfer.files);
   }, [handleFileChange]);
 
+  const removeFile = (index: number) => {
+    const newFiles = files.filter((_, i) => i !== index);
+    processFiles(newFiles);
+  };
+
   return (
-    <div className="w-full space-y-4">
+    <div className="space-y-4">
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-          isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400"
-        }`}
+        className={`border-2 border-dashed rounded-lg p-6 text-center ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => document.getElementById("file-input")?.click()}
       >
-        <div className="flex flex-col items-center justify-center gap-2">
-          <Upload className="w-10 h-10 text-gray-400" />
-          <p className="text-lg font-medium">Drag & drop menu images here</p>
-          <p className="text-sm text-gray-500">Supported formats: PNG, JPEG, PDF</p>
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="mt-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              document.getElementById("file-input")?.click();
-            }}
-          >
-            Browse files
-          </Button>
+        <div className="flex flex-col items-center justify-center space-y-2">
+          <Upload className="h-8 w-8 text-gray-400" />
+          <h3 className="text-lg font-medium">Drag and drop your menu images</h3>
+          <p className="text-sm text-gray-500">or click to browse files</p>
+          
           <input
-            id="file-input"
             type="file"
             multiple
-            accept="image/*,.pdf"
+            accept="image/*,application/pdf"
             className="hidden"
+            id="file-upload"
             onChange={(e) => handleFileChange(e.target.files)}
           />
+          
+          <label htmlFor="file-upload">
+            <Button variant="outline" size="sm" className="mt-2" asChild>
+              <span>Select Files</span>
+            </Button>
+          </label>
         </div>
       </div>
 
       {files.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6">
-          {files.map((file, index) => (
-            <Card key={`${file.name}-${index}`} className="overflow-hidden">
-              <CardContent className="p-2 relative">
-                <div className="aspect-[4/3] relative bg-gray-100 rounded overflow-hidden">
-                  {file.type.startsWith('image/') ? (
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt={file.name}
-                      className="object-cover w-full h-full"
-                      onLoad={(e) => URL.revokeObjectURL((e.target as HTMLImageElement).src)}
-                    />
-                  ) : (
-                    <div className="flex items-center justify-center h-full bg-gray-200">
-                      <p className="text-sm font-medium">PDF Document</p>
-                    </div>
-                  )}
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 h-6 w-6"
-                    onClick={() => removeFile(index)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium">Selected Files</h4>
+          <div className="space-y-2">
+            {files.map((file, index) => (
+              <div
+                key={`${file.name}-${index}`}
+                className="flex items-center justify-between bg-gray-50 p-2 rounded-md"
+              >
+                <div className="flex items-center space-x-2 truncate">
+                  <div className="w-8 h-8 bg-gray-200 rounded-md flex items-center justify-center">
+                    {file.type.startsWith('image/') ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt="Preview"
+                        className="w-8 h-8 object-cover rounded-md"
+                      />
+                    ) : (
+                      <span className="text-xs">PDF</span>
+                    )}
+                  </div>
+                  <span className="text-sm truncate max-w-[200px]">{file.name}</span>
                 </div>
-                <p className="text-xs truncate mt-2">{file.name}</p>
-              </CardContent>
-            </Card>
-          ))}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeFile(index)}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

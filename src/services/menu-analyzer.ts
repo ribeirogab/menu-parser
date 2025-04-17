@@ -14,19 +14,35 @@ export interface MenuAnalysisResult {
   error?: string;
 }
 
+// Define the structure for image input
+export interface ImageInput {
+  type: 'url' | 'base64';
+  data: string;
+}
+
 /**
  * Analyzes menu images and extracts structured data
- * @param imageUrls Array of URLs or base64 encoded images of restaurant menus
+ * @param images Array of image inputs (URLs or base64 encoded images) of restaurant menus
  * @returns Structured menu data with categorized items
  */
 export async function menuAnalyzer(
-  imageUrls: string[]
+  images: ImageInput[]
 ): Promise<MenuAnalysisResult> {
   try {
-    const images = imageUrls.map((url) => ({
-      type: 'image_url' as const,
-      image_url: { url },
-    }));
+    const formattedImages = images.map((image) => {
+      if (image.type === 'url') {
+        return {
+          type: 'image_url' as const,
+          image_url: { url: image.data },
+        };
+      } else {
+        // Para imagens base64, o formato já está correto
+        return {
+          type: 'image_url' as const,
+          image_url: { url: image.data },
+        };
+      }
+    });
 
     const systemPrompt = `
       You are an assistant specialized in analyzing restaurant menus.
@@ -70,7 +86,7 @@ export async function menuAnalyzer(
               type: 'text',
               text: 'Analyze this menu and extract structured data as requested:',
             },
-            ...images,
+            ...formattedImages,
           ],
         },
       ],
